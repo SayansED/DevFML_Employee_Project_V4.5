@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename type &apos;sistema.telas.AtualizarFuncionarioInserirCargo&apos; to &apos;FuncionarioAtualizarInserirCargo&apos;&#x0D;&#x0A;- Original project: &apos;Software&apos;&#x0D;&#x0A;- Original element: &apos;sistema.telas.AtualizarFuncionarioInserirCargo&apos;&#x0D;&#x0A;- Renamed element: &apos;sistema.telas.FuncionarioAtualizarInserirCargo&apos;&#x0D;&#x0A;- Update references to refactored element&#x0D;&#x0A;- Update textual occurrences in comments and strings" description="Rename type &apos;AtualizarFuncionarioInserirCargo&apos;" flags="589830" id="org.eclipse.jdt.ui.rename.type" input="/src&lt;sistema.telas{AtualizarFuncionarioInserirCargo.java[AtualizarFuncionarioInserirCargo" matchStrategy="1" name="FuncionarioAtualizarInserirCargo" qualified="false" references="true" similarDeclarations="false" stamp="1587771537444" textual="false" version="1.0"/>
+</session>

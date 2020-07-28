@@ -1,0 +1,333 @@
+package DAO;
+
+import java.awt.FlowLayout;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.swing.JOptionPane;
+
+import sistema.Navegador;
+import sistema.entidades.Cargo;
+import sistema.entidades.Funcionario;
+import sistema.telas.CargosInserir;
+import sistema.telas.CargosPesquisa;
+import sistema.telas.FuncionariosInserir;
+import sistema.telas.FuncionariosInserirCargo;
+import sqlite.Conexao;
+import sqlite.CriarBancoDeDados;
+
+public class DAO {
+
+	Cargo cargo = new Cargo();
+	Funcionario funcionario = new Funcionario();
+	// conexão
+	Conexao conexao = new Conexao();
+	CriarBancoDeDados criarBancoDeDados = new CriarBancoDeDados(conexao);
+	// instrucao SQL
+	PreparedStatement preparedStatement = null;
+	// resultados
+	ResultSet resultado = null;
+
+	/**
+	 * Salvar um novo Funcionário
+	 * 
+	 * @param pFuncionario
+	 * @return
+	 */
+	public boolean inserirFuncionario(Funcionario pFuncionario) {
+		funcionario = new Funcionario();
+		conexao.conectar();
+		String sqlInsertFuncionario = "INSERT INTO T_FUNCIONARIOS " + "(nome, " + "sobrenome, " + "dataNascimento, "
+				+ "email, " + "cargo, " + "salario, " + "data_entrada_sistema) " + "VALUES(?,?,?,?,?,?,?);";
+		try {
+			preparedStatement = conexao.criarPreparedStatement(sqlInsertFuncionario, Statement.RETURN_GENERATED_KEYS);
+			preparedStatement.setString(1, pFuncionario.getFuncionarioNome());
+			preparedStatement.setString(2, pFuncionario.getFuncionarioSobrenome());
+			preparedStatement.setString(3, pFuncionario.getFuncionarioDataNascimento());
+			preparedStatement.setString(4, pFuncionario.getFuncionarioEmail());
+			preparedStatement.setString(5, pFuncionario.getFuncionarioCargo());
+			preparedStatement.setDouble(6, pFuncionario.getFuncionarioSalario());
+			preparedStatement.setString(7, pFuncionario.getFuncionarioDataEntradaSistema());
+			int resultados = preparedStatement.executeUpdate();
+			if (resultados == 1) {
+				String message = String.format("Funcionário: %s\nCadastrado com sucesso",
+						pFuncionario.getFuncionarioNome());
+				JOptionPane.showMessageDialog(null, message, "Cadastro", JOptionPane.INFORMATION_MESSAGE);
+			} else
+				JOptionPane.showMessageDialog(null, "Funcionário não inserido");
+
+		} catch (SQLException ex) {
+			ex.printStackTrace();
+			JOptionPane.showMessageDialog(null, "Ocorreu um erro ao carregar.");
+			Logger.getLogger(DAO.class.getName()).log(Level.SEVERE, null, ex);
+			return false;
+		}
+		Navegador.funcionariosCadastrar();;
+		conexao.desconectar();
+		return true;
+	}
+	
+	public boolean editarFuncionario(Funcionario pFuncionario, String pSearchFun) {
+
+		// conexão
+		Conexao conexao = new Conexao();
+		// instrucao SQL
+		PreparedStatement preparedStatement = null;
+		// resultados
+		int resultado;
+
+		try {
+			// conectando ao banco de dados
+			// String busca = JOptionPane.showInputDialog("Digite o nome para a busca");
+			String sqlUpdate = "UPDATE T_FUNCIONARIOS SET nome=?,sobrenome=?,dataNascimento=?,email=?,cargo=?,salario=? WHERE nome=?;";
+			conexao.conectar();
+			preparedStatement = conexao.criarPreparedStatement(sqlUpdate);
+			
+			preparedStatement.setString(1, pFuncionario.getFuncionarioNome());
+			preparedStatement.setString(2, pFuncionario.getFuncionarioSobrenome());
+			preparedStatement.setString(3, pFuncionario.getFuncionarioDataNascimento());
+			preparedStatement.setString(4, pFuncionario.getFuncionarioEmail());
+			preparedStatement.setString(5, pFuncionario.getFuncionarioCargo());
+			preparedStatement.setDouble(6, pFuncionario.getFuncionarioSalario());
+			preparedStatement.setString(7, pSearchFun);
+			resultado = preparedStatement.executeUpdate();
+			if (resultado == 0) {
+				JOptionPane.showMessageDialog(null, "Funcionário não encontrado: " + pSearchFun, "Mensagem",
+						JOptionPane.INFORMATION_MESSAGE);
+				return false;
+			}
+			JOptionPane.showMessageDialog(null, "Funcionario atualizado com sucesso!");
+		} catch (SQLException ex) {
+			ex.printStackTrace();
+			JOptionPane.showMessageDialog(null, "Ocorreu um erro ao editar o Funcionario.");
+			Logger.getLogger(DAO.class.getName()).log(Level.SEVERE, null, ex);
+			return false;
+		}
+		Navegador.funcionariosConsultar();;
+		conexao.desconectar();
+		return true;
+	}
+	
+	public boolean buscaFuncionario (String pFuncionario) {
+		Conexao conexao = new Conexao();
+		PreparedStatement preparedStatement;
+		ResultSet resultado = null;
+		try {
+			String sqlSelect = "SELECT * FROM T_FUNCIONARIOS WHERE nome = ?;";
+			conexao.conectar();
+			preparedStatement = conexao.criarPreparedStatement(sqlSelect);
+			preparedStatement.setString(1, pFuncionario);
+			resultado = preparedStatement.executeQuery();
+			if (resultado.next() == false) {
+				return false;
+			}
+			resultado.close();
+			conexao.desconectar();
+			return true;
+		} catch (SQLException ex) {
+			ex.printStackTrace();
+			JOptionPane.showMessageDialog(null, "Ocorreu um erro ao consultar Funcionários");
+			return false;
+		}
+	}
+	
+	private void sqlDeletarFuncionario(String pFuncionario) {
+		String quest = "Deseja realmente excluir o Funcionário " + pFuncionario + "?";
+		int confirmacao = JOptionPane.showConfirmDialog(null, pergunta, "Excluir", JOptionPane.YES_NO_OPTION);
+
+		if (confirmacao == JOptionPane.YES_OPTION) {
+			// Conexão
+			// Connection conexao;
+			Conexao conexao = new Conexao();
+			// Instrução SQL
+			Statement statement;
+			// Resultados
+			int resultado;
+
+			try {
+
+				// Conectando - Driver
+				conexao.conectar();
+				// Instrução SQL
+				statement = conexao.criarStatement();
+				String sqlDelete = "DELETE FROM T_FUNCIONARIOS WHERE nome=?;";
+				PreparedStatement preparedStatement = conexao.criarPreparedStatement(sqlDelete);
+				preparedStatement.setString(1, pFuncionario);
+				resultado = preparedStatement.executeUpdate();
+				if (resultado == 1) {
+					String message = String.format("Funcionário: %s\nDeletado com sucesso", pFuncionario);
+					JOptionPane.showMessageDialog(null, message, "Excluir", JOptionPane.INFORMATION_MESSAGE);
+				} else {
+					JOptionPane.showMessageDialog(null, "Funcionário não encontrado");
+					Navegador.inicio();
+				}
+				conexao.desconectar();
+			} catch (SQLException ex) {
+				ex.printStackTrace();
+				JOptionPane.showMessageDialog(null, "Ocorreu um erro ao excluir Funcionário");
+				Logger.getLogger(FuncionariosInserir.class.getName()).log(Level.SEVERE, null, ex);
+			}
+		}
+		return;
+	}
+
+	/**
+	 * Salvar um novo Cargo
+	 * 
+	 * @param pCargo
+	 * @return
+	 */
+	public boolean inserirCargo(Cargo pCargo) {
+		cargo = new Cargo();
+		conexao.conectar();
+		String sqlInsert = "INSERT INTO T_CARGOS " + "(nome, data_entrada_sistema) " + "VALUES(?,?);";
+		try {
+			preparedStatement = conexao.criarPreparedStatement(sqlInsert, Statement.RETURN_GENERATED_KEYS);
+			preparedStatement.setString(1, pCargo.getCargoNome());
+			preparedStatement.setString(2, pCargo.getCargoDataEntradaSistema());
+			int resultados = preparedStatement.executeUpdate();
+			if (resultados == 1) {
+				String message = String.format("Cargo: %s\nCadastrado com sucesso", pCargo.getCargoNome());
+				JOptionPane.showMessageDialog(null, message, "Cadastro", JOptionPane.INFORMATION_MESSAGE);
+			} else
+				JOptionPane.showMessageDialog(null, "Cargo não inserido");
+
+		} catch (SQLException ex) {
+			ex.printStackTrace();
+			JOptionPane.showMessageDialog(null, "Ocorreu um erro ao adicionar", "ERRO", JOptionPane.ERROR_MESSAGE);
+			Logger.getLogger(DAO.class.getName()).log(Level.SEVERE, null, ex);
+			return false;
+		}
+		Navegador.cargosCadastrar();;
+		conexao.desconectar();
+		return true;
+	}
+	
+	public boolean deletarCargo(String pCargoSelecionado) {
+		int confirmacao = JOptionPane.showConfirmDialog(null,
+				"Deseja realmente " + "excluir o Cargo " + pCargoSelecionado + "?", "Excluir",
+				JOptionPane.YES_NO_OPTION);
+		if (confirmacao == JOptionPane.YES_OPTION) {
+			// conexão
+			Conexao conexao = new Conexao();
+			// instrucao SQL
+			Statement statement = null;
+			// resultados
+			ResultSet resultados = null;
+			try {
+				// Conectando - Driver
+				conexao.conectar();
+				// Instrução SQL
+				statement = conexao.criarStatement();
+				String sqlDelete = "DELETE FROM T_CARGOS WHERE nome=?;";
+				PreparedStatement preparedStatement = conexao.criarPreparedStatement(sqlDelete);
+				preparedStatement.setString(1, pCargoSelecionado);
+				int resultado = preparedStatement.executeUpdate();
+				if (resultado == 1) {
+					String message = String.format("Cargo: %s\nDeletado com sucesso", pCargoSelecionado);
+					JOptionPane.showMessageDialog(null, message, "Excluir", JOptionPane.INFORMATION_MESSAGE);
+				} else {
+					JOptionPane.showMessageDialog(null, "Cargo não encontrado");
+					return false;
+				}
+				conexao.desconectar();
+			} catch (SQLException ex) {
+				ex.printStackTrace();
+				JOptionPane.showMessageDialog(null, "Ocorreu um erro ao excluir o Cargo.");
+				Logger.getLogger(CargosInserir.class.getName()).log(Level.SEVERE, null, ex);
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public boolean atualizarCargo(String pCargoSelecionado) {
+		// conexão
+		Conexao conexao = new Conexao();
+		// instrucao SQL
+		Statement statement;
+		PreparedStatement preparedStatement;
+		// resultados
+		int resultado;
+
+		try {
+			conexao.conectar();
+			String alterando = JOptionPane.showInputDialog("Digite o novo nome para ser inserido");
+			String sqlUpdate = "UPDATE T_CARGOS SET nome = ? WHERE nome = ?;"; // Codigo de atualização
+			preparedStatement = conexao.criarPreparedStatement(sqlUpdate);
+			preparedStatement.setString(1, alterando);
+			preparedStatement.setString(2, pCargoSelecionado);
+			resultado = preparedStatement.executeUpdate(); // Executando o UPDATE
+			if (resultado == 0) {
+				JOptionPane.showMessageDialog(null, "Cargo não encontrado: " + pCargoSelecionado, "Mensagem",
+						JOptionPane.INFORMATION_MESSAGE);
+				return false;
+			}
+			JOptionPane.showMessageDialog(null, "Cargo alterado com sucesso", "Mensagem",
+					JOptionPane.INFORMATION_MESSAGE);
+			conexao.desconectar();
+
+		} catch (SQLException ew) {
+			ew.printStackTrace();
+		} finally {
+			conexao.desconectar();
+		}
+		return true;
+	}
+	
+	public boolean consultarCargo(String pNameConsult) {
+		// Conexão
+		Conexao conexao = new Conexao();
+		// Instrução SQL
+		PreparedStatement preparedStatement;
+		// Resultados
+		ResultSet resultado = null;
+
+		try {
+			// Criando instrução SQL
+			String sqlSelect = "SELECT id, nome, data_entrada_sistema FROM T_CARGOS WHERE nome = ?;";
+			// Conexão - Driver
+			conexao.conectar();
+			preparedStatement = conexao.criarPreparedStatement(sqlSelect);
+			preparedStatement.setString(1, pNameConsult);
+			resultado = preparedStatement.executeQuery();
+
+			if (resultado.next()) {
+				// Next == true "Encontoru os dados"
+				JOptionPane.showMessageDialog(null, "Consulta realizado com sucesso", "Consulta",
+						JOptionPane.INFORMATION_MESSAGE);
+				do {
+					JOptionPane.showMessageDialog(null, "Cargo" 
+							+ "\n" + "Id: " + resultado.getString("id") 
+							+ "\n" + "Nome: " + resultado.getString("nome") + "\n" 
+							+ "Data de entrada no sistema: " + resultado.getString("data_entrada_sistema"),
+							"Consulta de dados", JOptionPane.INFORMATION_MESSAGE);
+				} while (resultado.next());
+			} else {
+				// Next == false
+				JOptionPane.showMessageDialog(null, "Cargo não encontrado", "Mensagem",
+						JOptionPane.INFORMATION_MESSAGE);
+				Navegador.inicio();
+			}
+			resultado.close();
+			conexao.desconectar();
+		} catch (SQLException ex) {
+			ex.printStackTrace();
+			JOptionPane.showMessageDialog(null, "Ocorreu um erro ao consultar cargos");
+			Logger.getLogger(CargosPesquisa.class.getName()).log(Level.SEVERE, null, ex);
+			return false;
+		} finally {
+			try {
+				resultado.close();
+				conexao.desconectar();
+			} catch (SQLException ez) {
+				ez.printStackTrace();
+			}
+		}
+		return true;
+	}
+}

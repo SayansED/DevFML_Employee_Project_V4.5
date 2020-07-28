@@ -1,0 +1,225 @@
+package sistema.telas;
+
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.ParseException;
+import java.util.Calendar;
+import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.text.MaskFormatter;
+
+import DAO.DAO;
+import sistema.Navegador;
+import sistema.entidades.Funcionario;
+
+public class FuncionariosInserir extends JPanel {
+
+	JLabel lblTitulo, llblNome, lblSobrenome, lblDataNascimento, lblEmail, lblCargo, lblSalario, lblId,
+			lblDataEntradaSistema;
+	JTextField txtNome, txtSobrenome, txtEmail, txtCargo, txtId, txtDataEntradaSistema;
+	JFormattedTextField ftxtDataNascimento, ftxtSalario;
+	JButton btnGravar;
+	MaskFormatter mkfSalario;
+	ImageIcon imgSalvar = new ImageIcon("C:\\Users\\Eduardo\\Desktop\\Projeto\\Software\\Software\\img\\save01.png");
+	String dataAtual;
+
+	public FuncionariosInserir() {
+		criarComponentes();
+		criarEventos();
+		Navegador.habilitaMenu();
+	}
+
+	private void criarComponentes() {
+		setLayout(null);
+
+		lblTitulo = new JLabel("Cadastro de Funcionario", JLabel.CENTER);
+		lblTitulo.setFont(new Font(lblTitulo.getFont().getName(), Font.PLAIN, 20));
+		lblId = new JLabel("Id:", JLabel.LEFT);
+		txtId = new JTextField();
+		llblNome = new JLabel("Nome:", JLabel.LEFT);
+		txtNome = new JTextField();
+		lblSobrenome = new JLabel("Sobrenome:", JLabel.LEFT);
+		txtSobrenome = new JTextField();
+		lblDataNascimento = new JLabel("Data de Nascimento:", JLabel.LEFT);
+		ftxtDataNascimento = new JFormattedTextField();
+		try {
+			MaskFormatter dateMask = new MaskFormatter("##/##/####");
+			dateMask.install(ftxtDataNascimento);
+		} catch (ParseException ex) {
+			Logger.getLogger(FuncionariosInserir.class.getName()).log(Level.SEVERE, null, ex);
+		}
+		lblEmail = new JLabel("E-mail:", JLabel.LEFT);
+		txtEmail = new JTextField();
+		lblCargo = new JLabel("Cargo:", JLabel.LEFT);
+		txtCargo = new JTextField();
+		txtCargo.setEnabled(false);
+		txtCargo.setText("");
+		lblSalario = new JLabel("Salário:", JLabel.LEFT);
+
+		String padrao = "###,###.##";
+		DecimalFormat formatter = new DecimalFormat(padrao);
+		DecimalFormatSymbols dfs = new DecimalFormatSymbols(new Locale("pt", "Brazil"));
+		dfs.setDecimalSeparator(',');
+		dfs.setGroupingSeparator('.');
+		String padrao2 = "###0.##";
+		formatter = new DecimalFormat(padrao2, dfs);
+		ftxtSalario = new JFormattedTextField(formatter);
+		ftxtSalario.setValue(0);
+
+		btnGravar = new JButton("Adicionar", imgSalvar);
+		txtId.setEnabled(false);
+		txtId.setText("ID gerado automaticamente pelo banco de dados.");
+		lblDataEntradaSistema = new JLabel("Data de entrada no Sistema:", JLabel.LEFT);
+		try {
+			txtDataEntradaSistema = new JTextField();
+			Calendar hoje = Calendar.getInstance(); // Singleton
+			String diaHoje = Integer.toString(hoje.get(Calendar.DAY_OF_MONTH));
+			String mesHoje = Integer.toString(hoje.get(Calendar.MONTH) + 1);
+			String anoHoje = Integer.toString(hoje.get(Calendar.YEAR));
+			dataAtual = diaHoje + "/" + mesHoje + "/" + anoHoje;
+			txtDataEntradaSistema.setText(dataAtual);
+			txtDataEntradaSistema.setEnabled(false);
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(null, "Erro ao buscar data atual", "Erro", JOptionPane.ERROR_MESSAGE);
+		}
+		lblTitulo.setBounds(20, 20, 660, 40);
+		lblId.setBounds(150, 100, 400, 20);
+		txtId.setBounds(150, 120, 400, 40);
+		llblNome.setBounds(150, 160, 400, 20);
+		txtNome.setBounds(150, 180, 400, 40);
+		lblSobrenome.setBounds(150, 220, 400, 20);
+		txtSobrenome.setBounds(150, 240, 400, 40);
+		lblDataNascimento.setBounds(150, 280, 400, 20);
+		ftxtDataNascimento.setBounds(150, 300, 400, 40);
+		lblEmail.setBounds(150, 340, 400, 20);
+		txtEmail.setBounds(150, 360, 400, 40);
+		lblCargo.setBounds(150, 400, 400, 20);
+		txtCargo.setBounds(150, 420, 400, 40);
+		lblSalario.setBounds(150, 400, 400, 20);
+		ftxtSalario.setBounds(150, 420, 400, 40);
+		btnGravar.setBounds(280, 480, 150, 40);
+		lblDataEntradaSistema.setBounds(580, 100, 180, 20);
+		txtDataEntradaSistema.setBounds(630, 120, 60, 40);
+
+		add(lblTitulo);
+		add(lblId);
+		add(txtId);
+		add(llblNome);
+		add(txtNome);
+		add(lblSobrenome);
+		add(txtSobrenome);
+		add(lblDataNascimento);
+		add(ftxtDataNascimento);
+		add(lblEmail);
+		add(txtEmail);
+		add(lblSalario);
+		add(ftxtSalario);
+		add(btnGravar);
+		add(lblDataEntradaSistema);
+		add(txtDataEntradaSistema);
+
+		setVisible(true);
+	}
+
+	private void criarEventos() {
+		btnGravar.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (verificaCampos() == true) {
+					try {
+						/*
+						Funcionario novoFuncionario = new Funcionario();
+						novoFuncionario.setFuncionarioNome(txtNome.getText());
+						novoFuncionario.setFuncionarioSobrenome(txtSobrenome.getText());
+						novoFuncionario.setFuncionarioDataNascimento(ftxtDataNascimento.getText());
+						novoFuncionario.setFuncionarioEmail(txtEmail.getText());
+						novoFuncionario.setFuncionarioCargo(txtCargo.getText());
+						String salario = ftxtSalario.getText();
+						salario = salario.replaceAll(",", ".");
+						Double convertSalario = Double.parseDouble(salario);
+						novoFuncionario.setFuncionarioSalario(convertSalario);
+						*/
+						Funcionario novoFuncionario = new Funcionario();
+						novoFuncionario = funcionarioAtual();
+						selecionarCargoComboBox(novoFuncionario);
+						novoFuncionario.setFuncionarioDataEntradaSistema(dataAtual);
+						System.out.println("inseriu: " + txtNome.getText());
+						System.out.println("inseriu: " + txtCargo.getText());
+					} catch (Exception e2) {
+						e2.printStackTrace();
+						JOptionPane.showMessageDialog(null, "Ocorreu um erro ao carregar.");
+						Logger.getLogger(FuncionariosInserir.class.getName()).log(Level.SEVERE, null, e2);
+					}
+				} else {
+					JOptionPane.showMessageDialog(null, "Preencha os campos corretamente", "",
+							JOptionPane.WARNING_MESSAGE);
+				}
+			}
+		});
+	}
+
+	private void selecionarCargoComboBox(Funcionario novoFuncionario) {
+
+		if (verificaCampos() == true) {
+			Navegador.FuncionariosInserirCargo(novoFuncionario);
+		} else {
+			return;
+		}
+	}
+
+	public boolean verificaCampos() {
+		if (txtNome.getText().isEmpty() || txtSobrenome.getText().isEmpty() || txtEmail.getText().isEmpty()
+				|| ftxtDataNascimento.getText().isEmpty() || ftxtSalario.getText().length() <= 3) {
+			JOptionPane.showMessageDialog(null, "Preencha todos os campo", "Validação", JOptionPane.WARNING_MESSAGE);
+			return false;
+		}
+
+		// validando nome
+		else if (txtNome.getText().length() <= 3) {
+			JOptionPane.showMessageDialog(null, "Por favor, preencha o nome corretamente.");
+			return false;
+		}
+
+		// validando sobrenome
+		else if (txtSobrenome.getText().length() <= 3) {
+			JOptionPane.showMessageDialog(null, "Por favor, preencha o sobrenome corretamente.");
+			return false;
+		}
+
+		// Validando Salario
+		else if (ftxtSalario.getText().length() >= 3) {
+			String salarioTeste = ftxtSalario.getText();
+			if (!salarioTeste.substring(0).matches("[\\+\\-]?[0-9]{0,8}([,|.][0-9]{0,3})?")) {
+				JOptionPane.showMessageDialog(null, "Por favor, preencha o salário corretamente.");
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	private Funcionario funcionarioAtual() {
+		Funcionario novoFuncionario = new Funcionario();
+		novoFuncionario.setFuncionarioNome(txtNome.getText());
+		novoFuncionario.setFuncionarioSobrenome(txtSobrenome.getText());
+		novoFuncionario.setFuncionarioDataNascimento(ftxtDataNascimento.getText());
+		novoFuncionario.setFuncionarioEmail(txtEmail.getText());
+		novoFuncionario.setFuncionarioCargo(txtCargo.getText());
+		String salario = ftxtSalario.getText();
+		salario = salario.replaceAll(",", ".");
+		Double convertSalario = Double.parseDouble(salario);
+		novoFuncionario.setFuncionarioSalario(convertSalario);
+		return novoFuncionario;
+	}
+}
